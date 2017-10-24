@@ -77,10 +77,10 @@ def svm_loss_vectorized(W, X, y, reg):
     # result in loss.                                                           #
     #############################################################################
     sorces = X.dot(W)
-    correct_class_sorce = sorces[np.arange(num_train), y]
+    correct_class_sorce = sorces[range(num_train), y]
 
     margins = np.maximum(0, sorces - correct_class_sorce[:, np.newaxis] + delta)
-    margins[np.arange(num_train), y] = 0
+    margins[range(num_train), y] = 0
     loss = np.sum(margins)
 
     loss /= num_train

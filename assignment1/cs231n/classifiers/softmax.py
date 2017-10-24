@@ -78,28 +78,58 @@ def softmax_loss_vectorized(W, X, y, reg):
     #############################################################################
 
     num_train = X.shape[0]
-    num_classes = W.shape[1]
 
-    scores = X.dot(W)
-    scores -= np.max(scores, axis=1)[:, np.newaxis]
-    exp_scores = np.exp(scores)
-    exp_sum_scores = np.sum(exp_scores, axis=1)
-    correct_class_score = scores[xrange(num_train), y]
-    loss = np.sum(np.log(exp_sum_scores)) - np.sum(correct_class_score)
+    # forward
+    score = np.dot(X, W)  # (N, C)
+    out = np.exp(score)
+    out /= np.sum(out, axis=1, keepdims=True)  # (N, C)
+    loss -= np.sum(np.log(out[np.arange(num_train), y]))
+    loss /= num_train
+    loss += 0.5 * reg * np.sum(W ** 2)
 
-    exp_scores = exp_scores / exp_sum_scores[:, np.newaxis]
+    # backward
+    dout = np.copy(out)  # (N, C)
+    dout[np.arange(num_train), y] -= 1
+    dW = np.dot(X.T, dout)  # (D, C)
+    dW /= num_train
+    dW += reg * W
+    dW += reg * W
 
-    for i in xrange(num_train):
-        dW += exp_scores[i] * X[i][:, np.newaxis]
-        dW[:, y[i]] -= X[i]
+    # scores = X.dot(W)
+    # scores -= np.max(scores, axis=1)[:, np.newaxis]
+    # exp_scores = np.exp(scores)
+    # exp_sum_scores = np.sum(exp_scores, axis=1)
+    # correct_class_score = scores[xrange(num_train), y]
+    # loss = np.sum(np.log(exp_sum_scores)) - np.sum(correct_class_score)
+    #
+    # exp_scores = exp_scores / exp_sum_scores[:, np.newaxis]
+    # dW += np.sum(X[range(num_train)][:, np.newaxis] * exp_scores[range(num_train)], axis=0)
+    # dW[:, y[range(num_train)]] -= X[range(num_train)]
+
+    # ValueError: operands could not be broadcast together with shapes (200,10) (200,1,3073)
+    # dW += exp_scores[range(num_train)] * X[range(num_train)] # [:, np.newaxis]
+    # dW[:, y[range(num_train)]] -= X[range(num_train)]
+
+
+    # dW += exp_scores[range(num_train)] * X[range(num_train)].reshape(-1, 1)  # [:, np.newaxis]
+    # dW[:, y[range(num_train)]] -= X[range(num_train)]
+
+    # for i in xrange(num_train):
+    #     dW += X[i][:, np.newaxis] * exp_scores[i]
+    #     # # print( dW.shape)
+    #     # print(exp_scores[i].shape)
+    #     # # print(X[i].shape)
+    #     # print(X[i][:, np.newaxis].shape)
+    #     # print((exp_scores[i] * X[i][:, np.newaxis]).shape)
+    #     dW[:, y[i]] -= X[i]
 
     # dW += exp_scores * X[:, :, np.newaxis]
     # dW[:, y[xrange(num_train)]] -= X[xrange(num_train)]
 
-    loss /= num_train
-    loss += 0.5 * reg * np.sum(W * W)
-    dW /= num_train
-    dW += reg * W
+    # loss /= num_train
+    # loss += 0.5 * reg * np.sum(W * W)
+    # dW /= num_train
+    # dW += reg * W
     #############################################################################
     #                          END OF YOUR CODE                                 #
     #############################################################################
